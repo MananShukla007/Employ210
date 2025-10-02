@@ -19,7 +19,6 @@ class UserManager: ObservableObject {
     
     @Published var users: [UserModel] = []
     
-    // Fetch all users
     func fetchUsers() {
         db.collection("users").getDocuments { snapshot, error in
             if let error = error {
@@ -35,7 +34,6 @@ class UserManager: ObservableObject {
         }
     }
     
-    // Create a new user
     func addUser(name: String, email: String, completion: @escaping (Error?) -> Void) {
         let newUser = ["name": name, "email": email]
         db.collection("users").addDocument(data: newUser) { error in
@@ -46,7 +44,6 @@ class UserManager: ObservableObject {
         }
     }
     
-    // Delete a user
     func deleteUser(id: String) {
         db.collection("users").document(id).delete { error in
             if let error = error {
