@@ -377,6 +377,7 @@ struct ProgramDetailSheet: View {
     @State private var showShareSheet = false
     @State private var showEvaluationView = false
     @State private var exportedFileURL: URL?
+    @State private var stepsExpanded = false
     
     var body: some View {
         NavigationStack {
@@ -392,9 +393,10 @@ struct ProgramDetailSheet: View {
                                 .font(.system(size: 50))
                                 .foregroundStyle(.green)
                             
-                            Text("Saved Program")
+                            Text(program.taskDescription)
                                 .font(.title2.bold())
                                 .foregroundColor(.white)
+                                .multilineTextAlignment(.center)
                             
                             Text(program.createdAt.formatted(date: .long, time: .shortened))
                                 .font(.subheadline)
@@ -441,69 +443,68 @@ struct ProgramDetailSheet: View {
                         }
                         .padding(.horizontal, 24)
                         
-                        // High-Level Steps
-                        if !program.highLevelSteps.isEmpty {
+                        // Steps (collapsible)
+                        if !program.highLevelSteps.isEmpty || !program.lowLevelSteps.isEmpty {
                             VStack(alignment: .leading, spacing: 12) {
-                                HStack {
-                                    Image(systemName: "list.bullet.rectangle")
-                                        .foregroundStyle(.teal)
-                                    Text("High-Level Steps")
-                                        .font(.headline)
-                                        .foregroundColor(.teal)
-                                }
-                                
-                                VStack(spacing: 8) {
-                                    ForEach(Array(program.highLevelSteps.enumerated()), id: \.offset) { index, step in
-                                        HStack(alignment: .top, spacing: 12) {
-                                            Text("\(index + 1)")
-                                                .font(.caption.bold())
-                                                .foregroundColor(.teal)
-                                                .frame(width: 24, height: 24)
-                                                .background(Color.teal.opacity(0.2))
-                                                .clipShape(Circle())
-                                            
-                                            Text(step)
-                                                .font(.subheadline)
-                                                .foregroundColor(.white.opacity(0.9))
-                                            
-                                            Spacer()
-                                        }
-                                        .padding(12)
-                                        .background(Color.white.opacity(0.04))
-                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                Button {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        stepsExpanded.toggle()
+                                    }
+                                } label: {
+                                    HStack {
+                                        Image(systemName: "list.bullet.rectangle")
+                                            .foregroundStyle(.teal)
+                                        Text("Steps")
+                                            .font(.headline)
+                                            .foregroundColor(.teal)
+                                        Spacer()
+                                        Image(systemName: stepsExpanded ? "chevron.up" : "chevron.down")
+                                            .font(.system(size: 14, weight: .semibold))
+                                            .foregroundColor(.teal)
                                     }
                                 }
-                            }
-                            .padding(.horizontal, 24)
-                        }
-                        
-                        // Detailed Steps
-                        if !program.lowLevelSteps.isEmpty {
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack {
-                                    Image(systemName: "checklist")
-                                        .foregroundStyle(.blue)
-                                    Text("Detailed Steps")
-                                        .font(.headline)
-                                        .foregroundColor(.blue)
-                                }
-                                
-                                VStack(spacing: 8) {
-                                    ForEach(Array(program.lowLevelSteps.enumerated()), id: \.offset) { index, step in
-                                        HStack(alignment: .top, spacing: 12) {
-                                            Image(systemName: "checkmark.circle.fill")
-                                                .foregroundStyle(.blue)
-                                                .font(.system(size: 16))
-                                            
-                                            Text(step)
-                                                .font(.subheadline)
-                                                .foregroundColor(.white.opacity(0.85))
-                                            
-                                            Spacer()
+                                .buttonStyle(.plain)
+
+                                if stepsExpanded {
+                                    if !program.highLevelSteps.isEmpty {
+                                        VStack(spacing: 8) {
+                                            ForEach(Array(program.highLevelSteps.enumerated()), id: \.offset) { index, step in
+                                                HStack(alignment: .top, spacing: 12) {
+                                                    Text("\(index + 1)")
+                                                        .font(.caption.bold())
+                                                        .foregroundColor(.teal)
+                                                        .frame(width: 24, height: 24)
+                                                        .background(Color.teal.opacity(0.2))
+                                                        .clipShape(Circle())
+                                                    Text(step)
+                                                        .font(.subheadline)
+                                                        .foregroundColor(.white.opacity(0.9))
+                                                    Spacer()
+                                                }
+                                                .padding(12)
+                                                .background(Color.white.opacity(0.04))
+                                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                            }
                                         }
-                                        .padding(12)
-                                        .background(Color.white.opacity(0.04))
-                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                    }
+
+                                    if !program.lowLevelSteps.isEmpty {
+                                        VStack(spacing: 8) {
+                                            ForEach(Array(program.lowLevelSteps.enumerated()), id: \.offset) { index, step in
+                                                HStack(alignment: .top, spacing: 12) {
+                                                    Image(systemName: "checkmark.circle.fill")
+                                                        .foregroundStyle(.blue)
+                                                        .font(.system(size: 16))
+                                                    Text(step)
+                                                        .font(.subheadline)
+                                                        .foregroundColor(.white.opacity(0.85))
+                                                    Spacer()
+                                                }
+                                                .padding(12)
+                                                .background(Color.white.opacity(0.04))
+                                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -543,6 +544,70 @@ struct ProgramDetailSheet: View {
                             .padding(.horizontal, 24)
                         }
                         
+                        // Completed Sessions
+                        let evaluations = EvaluationStore.shared.evaluationsForProgram(id: program.id)
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(.green)
+                                Text("Completed Sessions")
+                                    .font(.headline)
+                                    .foregroundColor(.green)
+                                Spacer()
+                                if !evaluations.isEmpty {
+                                    Text("\(evaluations.count)")
+                                        .font(.caption.bold())
+                                        .foregroundColor(.green)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Color.green.opacity(0.15))
+                                        .clipShape(Capsule())
+                                }
+                            }
+
+                            if evaluations.isEmpty {
+                                Text("No sessions completed yet")
+                                    .font(.subheadline)
+                                    .foregroundColor(.white.opacity(0.4))
+                                    .padding(16)
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.white.opacity(0.04))
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                            } else {
+                                VStack(spacing: 8) {
+                                    ForEach(evaluations) { evaluation in
+                                        let totalSteps = evaluation.passCount + evaluation.notCompletedCount + evaluation.needsPromptingCount + evaluation.pendingCount
+                                        let pct = totalSteps > 0 ? Int((Double(evaluation.passCount) / Double(totalSteps)) * 100) : 0
+                                        let mins = evaluation.elapsedTimeSeconds / 60
+                                        let secs = evaluation.elapsedTimeSeconds % 60
+                                        let dateStr: String = {
+                                            let df = DateFormatter()
+                                            df.dateFormat = "MMM d, yyyy"
+                                            return df.string(from: evaluation.evaluatedAt)
+                                        }()
+                                        HStack(spacing: 12) {
+                                            VStack(alignment: .leading, spacing: 4) {
+                                                Text(dateStr)
+                                                    .font(.subheadline)
+                                                    .foregroundColor(.white.opacity(0.8))
+                                                Text("\(pct)% completed")
+                                                    .font(.caption.bold())
+                                                    .foregroundColor(.green)
+                                            }
+                                            Spacer()
+                                            Text(String(format: "%02d:%02d", mins, secs))
+                                                .font(.system(.subheadline, design: .monospaced))
+                                                .foregroundColor(.white.opacity(0.6))
+                                        }
+                                        .padding(12)
+                                        .background(Color.white.opacity(0.04))
+                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                    }
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 24)
+
                         Spacer(minLength: 50)
                     }
                 }
