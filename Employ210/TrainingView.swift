@@ -2,13 +2,9 @@
 //  TrainorView.swift
 //  Employ210
 //
-//  Created by Aiden Panter on 9/30/25.
-//
+//  Created by Manan Shukla
 import SwiftUI
 import UIKit
-import FirebaseCore
-import FirebaseAuth
-import FirebaseFirestore
 
 struct TrainingView: View {
     var body: some View {

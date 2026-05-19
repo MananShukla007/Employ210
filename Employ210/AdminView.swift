@@ -2,8 +2,7 @@
 //  AdminView.swift
 //  Employ210
 //
-//  Created by Aiden Panter on 9/30/25.
-//
+//  Created by Manan Shukla 
 
 import SwiftUI
 
@@ -75,7 +74,6 @@ struct SearchUserView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .padding(.horizontal)
             
-           
             List {
                 if filteredUsers.isEmpty {
                     Text("No users found")
@@ -140,8 +138,12 @@ struct AddUserView: View {
                         .keyboardType(.emailAddress)
                         .focused($focusedField, equals: .email)
                     
-                    if !errorMessage.isEmpty { ErrorMessageView(message: errorMessage) }
-                    if !successMessage.isEmpty { SuccessMessageView(message: successMessage) }
+                    if !errorMessage.isEmpty {
+                        ErrorMessageView(message: errorMessage)
+                    }
+                    if !successMessage.isEmpty {
+                        SuccessMessageView(message: successMessage)
+                    }
                 }
                 
                 Button {
@@ -185,7 +187,10 @@ struct AddUserView: View {
         }
     }
 }
-    
+
+// MARK: - Helper Views
+
+
 #Preview {
     AdminView()
 }
