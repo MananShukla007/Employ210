@@ -378,6 +378,7 @@ struct ProgramDetailSheet: View {
     @State private var showEvaluationView = false
     @State private var exportedFileURL: URL?
     @State private var stepsExpanded = false
+    @State private var selectedEvaluation: EvaluationResult?
     
     var body: some View {
         NavigationStack {
@@ -585,23 +586,31 @@ struct ProgramDetailSheet: View {
                                             df.dateFormat = "MMM d, yyyy"
                                             return df.string(from: evaluation.evaluatedAt)
                                         }()
-                                        HStack(spacing: 12) {
-                                            VStack(alignment: .leading, spacing: 4) {
-                                                Text(dateStr)
-                                                    .font(.subheadline)
-                                                    .foregroundColor(.white.opacity(0.8))
-                                                Text("\(pct)% completed")
-                                                    .font(.caption.bold())
-                                                    .foregroundColor(.green)
+                                        Button {
+                                            selectedEvaluation = evaluation
+                                        } label: {
+                                            HStack(spacing: 12) {
+                                                VStack(alignment: .leading, spacing: 4) {
+                                                    Text(dateStr)
+                                                        .font(.subheadline)
+                                                        .foregroundColor(.white.opacity(0.8))
+                                                    Text("\(pct)% completed")
+                                                        .font(.caption.bold())
+                                                        .foregroundColor(.green)
+                                                }
+                                                Spacer()
+                                                Text(String(format: "%02d:%02d", mins, secs))
+                                                    .font(.system(.subheadline, design: .monospaced))
+                                                    .foregroundColor(.white.opacity(0.6))
+                                                Image(systemName: "chevron.right")
+                                                    .font(.system(size: 12, weight: .semibold))
+                                                    .foregroundColor(.white.opacity(0.3))
                                             }
-                                            Spacer()
-                                            Text(String(format: "%02d:%02d", mins, secs))
-                                                .font(.system(.subheadline, design: .monospaced))
-                                                .foregroundColor(.white.opacity(0.6))
+                                            .padding(12)
+                                            .background(Color.white.opacity(0.04))
+                                            .clipShape(RoundedRectangle(cornerRadius: 10))
                                         }
-                                        .padding(12)
-                                        .background(Color.white.opacity(0.04))
-                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                        .buttonStyle(.plain)
                                     }
                                 }
                             }
@@ -653,9 +662,12 @@ struct ProgramDetailSheet: View {
             .fullScreenCover(isPresented: $showEvaluationView) {
                 TaskEvaluationView(program: program)
             }
+            .sheet(item: $selectedEvaluation) { evaluation in
+                SessionDetailSheet(evaluation: evaluation, program: program)
+            }
         }
     }
-    
+
     private func shareProgram() {
         let document = generateReadableDocument()
         
@@ -746,6 +758,133 @@ struct ProgramDetailSheet: View {
         """
         
         return document
+    }
+}
+
+// MARK: - Session Detail Sheet
+
+struct SessionDetailSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let evaluation: EvaluationResult
+    let program: SavedHTAProgram
+
+    var allSteps: [(id: String, text: String, type: StepType)] {
+        var steps: [(id: String, text: String, type: StepType)] = []
+        for (index, step) in program.highLevelSteps.enumerated() {
+            steps.append((id: "high_\(index)", text: step, type: .highLevel))
+        }
+        for (index, step) in program.lowLevelSteps.enumerated() {
+            steps.append((id: "low_\(index)", text: step, type: .detailed))
+        }
+        return steps
+    }
+
+    var totalSteps: Int {
+        evaluation.passCount + evaluation.notCompletedCount + evaluation.needsPromptingCount + evaluation.pendingCount
+    }
+
+    var completionPct: Int {
+        totalSteps > 0 ? Int((Double(evaluation.passCount) / Double(totalSteps)) * 100) : 0
+    }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color(red: 0.05, green: 0.10, blue: 0.15)
+                    .ignoresSafeArea()
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 24) {
+
+                        // Header
+                        VStack(spacing: 16) {
+                            let mins = evaluation.elapsedTimeSeconds / 60
+                            let secs = evaluation.elapsedTimeSeconds % 60
+                            let dateStr: String = {
+                                let df = DateFormatter()
+                                df.dateFormat = "MMM d, yyyy"
+                                return df.string(from: evaluation.evaluatedAt)
+                            }()
+
+                            Text(dateStr)
+                                .font(.subheadline)
+                                .foregroundColor(.white.opacity(0.6))
+
+                            Text("\(completionPct)%")
+                                .font(.system(size: 52, weight: .bold, design: .rounded))
+                                .foregroundColor(.green)
+
+                            Text("completed")
+                                .font(.subheadline)
+                                .foregroundColor(.white.opacity(0.5))
+
+                            Text(String(format: "%02d:%02d", mins, secs))
+                                .font(.system(.title3, design: .monospaced))
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 20)
+
+                        // Stats row
+                        HStack(spacing: 12) {
+                            StatBadge(count: evaluation.passCount, label: "Pass", color: .green)
+                            StatBadge(count: evaluation.needsPromptingCount, label: "Prompt", color: .orange)
+                            StatBadge(count: evaluation.notCompletedCount, label: "Incomplete", color: .red)
+                            StatBadge(count: evaluation.pendingCount, label: "Pending", color: .gray)
+                        }
+                        .padding(.horizontal, 24)
+
+                        // Step-by-step results
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Image(systemName: "list.bullet.rectangle")
+                                    .foregroundStyle(.teal)
+                                Text("Step Results")
+                                    .font(.headline)
+                                    .foregroundColor(.teal)
+                            }
+                            .padding(.horizontal, 24)
+
+                            VStack(spacing: 10) {
+                                ForEach(Array(allSteps.enumerated()), id: \.element.id) { index, step in
+                                    EvaluationStepCard(
+                                        index: index + 1,
+                                        text: step.text,
+                                        type: step.type,
+                                        state: evaluation.stepResults[step.id] ?? 0,
+                                        onTap: {}
+                                    )
+                                }
+                            }
+                            .padding(.horizontal, 24)
+                        }
+
+                        Spacer(minLength: 50)
+                    }
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 14, weight: .semibold))
+                            Text("Back")
+                        }
+                        .foregroundColor(.white)
+                    }
+                }
+                ToolbarItem(placement: .principal) {
+                    Text("Session Details")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                }
+            }
+            .toolbarColorScheme(.dark, for: .navigationBar)
+        }
     }
 }
 
