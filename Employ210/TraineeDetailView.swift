@@ -669,95 +669,207 @@ struct ProgramDetailSheet: View {
     }
 
     private func shareProgram() {
-        let document = generateReadableDocument()
-        
+        let pdfData = generatePDF()
+
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd_HH-mm"
         let timestamp = dateFormatter.string(from: program.createdAt)
-        let fileName = "HTA_Program_\(timestamp).txt"
-        
-        let tempDirectory = FileManager.default.temporaryDirectory
-        let fileURL = tempDirectory.appendingPathComponent(fileName)
-        
+        let fileName = "HTA_Program_\(timestamp).pdf"
+
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
         do {
-            try document.write(to: fileURL, atomically: true, encoding: .utf8)
+            try pdfData.write(to: fileURL)
             exportedFileURL = fileURL
             showShareSheet = true
         } catch {
-            print("❌ Failed to create share file: \(error)")
+            print("❌ Failed to create PDF: \(error)")
         }
     }
-    
-    private func generateReadableDocument() -> String {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateStyle = .long
-        dateFormatter.timeStyle = .short
-        
-        var document = """
-        ═══════════════════════════════════════════════════════════════
-                        HIERARCHICAL TASK ANALYSIS (HTA)
-        ═══════════════════════════════════════════════════════════════
-        
-        Generated: \(dateFormatter.string(from: program.createdAt))
-        App: Employ210
-        
-        ───────────────────────────────────────────────────────────────
-        TASK DESCRIPTION
-        ───────────────────────────────────────────────────────────────
-        
-        \(program.taskDescription)
-        
-        """
-        
-        if !program.highLevelSteps.isEmpty {
-            document += """
-            
-            ───────────────────────────────────────────────────────────────
-            HIGH-LEVEL STEPS
-            ───────────────────────────────────────────────────────────────
-            
-            """
-            for (index, step) in program.highLevelSteps.enumerated() {
-                document += "\(index + 1). \(step)\n"
+
+    // swiftlint:disable:next function_body_length
+    private func generatePDF() -> Data {
+        let pageW: CGFloat  = 595
+        let pageH: CGFloat  = 842
+        let margin: CGFloat = 52
+        let contentW        = pageW - margin * 2
+        let headerH: CGFloat = 68
+        let footerH: CGFloat = 44
+
+        let teal      = UIColor(red: 0.00, green: 0.78, blue: 0.69, alpha: 1)
+        let blue      = UIColor(red: 0.28, green: 0.52, blue: 0.90, alpha: 1)
+        let orange    = UIColor(red: 0.90, green: 0.60, blue: 0.18, alpha: 1)
+        let headerBg  = UIColor(red: 0.06, green: 0.09, blue: 0.13, alpha: 1)
+        let bodyText  = UIColor(red: 0.18, green: 0.18, blue: 0.22, alpha: 1)
+        let mutedText = UIColor(red: 0.55, green: 0.55, blue: 0.60, alpha: 1)
+        let rowAlt    = UIColor(red: 0.96, green: 0.97, blue: 0.98, alpha: 1)
+        let boxBg     = UIColor(red: 0.95, green: 0.97, blue: 0.97, alpha: 1)
+        let divider   = UIColor(red: 0.87, green: 0.89, blue: 0.91, alpha: 1)
+
+        let paraStyle = NSMutableParagraphStyle()
+        paraStyle.lineSpacing = 3
+
+        let bodyAttrs: [NSAttributedString.Key: Any] = [
+            .font: UIFont.systemFont(ofSize: 11.5),
+            .foregroundColor: bodyText,
+            .paragraphStyle: paraStyle
+        ]
+
+        var currentY: CGFloat = 0
+        var pageNum = 0
+
+        let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: pageW, height: pageH))
+
+        return renderer.pdfData { ctx in
+
+            func strHeight(_ text: String, attrs: [NSAttributedString.Key: Any], width: CGFloat) -> CGFloat {
+                ceil(NSAttributedString(string: text, attributes: attrs)
+                    .boundingRect(with: CGSize(width: width, height: .greatestFiniteMagnitude),
+                                  options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil).height)
+            }
+
+            func drawStr(_ text: String, attrs: [NSAttributedString.Key: Any], x: CGFloat, y: CGFloat, w: CGFloat) {
+                NSAttributedString(string: text, attributes: attrs)
+                    .draw(with: CGRect(x: x, y: y, width: w, height: 4000),
+                          options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
+            }
+
+            func drawHeader() {
+                let c = ctx.cgContext
+                c.setFillColor(headerBg.cgColor)
+                c.fill(CGRect(x: 0, y: 0, width: pageW, height: headerH))
+                c.setFillColor(teal.cgColor)
+                c.fill(CGRect(x: 0, y: headerH - 3, width: pageW, height: 3))
+
+                let wm = NSMutableAttributedString(string: "employ", attributes: [
+                    .font: UIFont.systemFont(ofSize: 24, weight: .light), .foregroundColor: UIColor.white
+                ])
+                wm.append(NSAttributedString(string: "210", attributes: [
+                    .font: UIFont.systemFont(ofSize: 24, weight: .semibold), .foregroundColor: teal
+                ]))
+                wm.draw(at: CGPoint(x: margin, y: (headerH - 3 - wm.size().height) / 2))
+
+                let sub = NSAttributedString(string: "HIERARCHICAL TASK ANALYSIS", attributes: [
+                    .font: UIFont.systemFont(ofSize: 8, weight: .medium),
+                    .foregroundColor: UIColor.white.withAlphaComponent(0.38),
+                    .kern: 1.6
+                ])
+                sub.draw(at: CGPoint(x: pageW - margin - sub.size().width, y: (headerH - 3 - sub.size().height) / 2))
+            }
+
+            func drawFooter() {
+                let c = ctx.cgContext
+                let fy = pageH - footerH + 8
+                c.setStrokeColor(divider.cgColor); c.setLineWidth(0.5)
+                c.move(to: CGPoint(x: margin, y: fy)); c.addLine(to: CGPoint(x: pageW - margin, y: fy))
+                c.strokePath()
+                let a: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 8.5), .foregroundColor: mutedText]
+                NSAttributedString(string: "Employ210 · Empowering Employment Success", attributes: a)
+                    .draw(at: CGPoint(x: margin, y: fy + 10))
+                let pg = NSAttributedString(string: "Page \(pageNum)", attributes: a)
+                pg.draw(at: CGPoint(x: pageW - margin - pg.size().width, y: fy + 10))
+            }
+
+            func newPage() {
+                ctx.beginPage(); pageNum += 1
+                drawHeader(); drawFooter()
+                currentY = headerH + 24
+            }
+
+            func checkBreak(_ need: CGFloat) {
+                if currentY + need > pageH - footerH - 8 { newPage() }
+            }
+
+            func drawSectionLabel(_ title: String, color: UIColor) {
+                checkBreak(36)
+                NSAttributedString(string: title, attributes: [
+                    .font: UIFont.systemFont(ofSize: 10, weight: .semibold),
+                    .foregroundColor: color, .kern: 1.4
+                ]).draw(at: CGPoint(x: margin, y: currentY))
+                currentY += 15
+                ctx.cgContext.setFillColor(color.withAlphaComponent(0.30).cgColor)
+                ctx.cgContext.fill(CGRect(x: margin, y: currentY, width: 36, height: 2))
+                currentY += 10
+            }
+
+            // ── Page 1 ──
+            newPage()
+
+            // Generated date
+            let df = DateFormatter(); df.dateStyle = .long; df.timeStyle = .short
+            NSAttributedString(string: "Generated \(df.string(from: Date()))", attributes: [
+                .font: UIFont.systemFont(ofSize: 9.5), .foregroundColor: mutedText
+            ]).draw(at: CGPoint(x: margin, y: currentY))
+            currentY += 24
+
+            // ── Task Description ──
+            drawSectionLabel("TASK DESCRIPTION", color: teal)
+
+            let tdH = strHeight(program.taskDescription, attrs: bodyAttrs, width: contentW - 28)
+            let boxH = tdH + 24
+            checkBreak(boxH + 16)
+            let boxRect = CGRect(x: margin, y: currentY, width: contentW, height: boxH)
+            ctx.cgContext.setFillColor(boxBg.cgColor)
+            ctx.cgContext.addPath(UIBezierPath(roundedRect: boxRect, cornerRadius: 6).cgPath)
+            ctx.cgContext.fillPath()
+            ctx.cgContext.setFillColor(teal.cgColor)
+            ctx.cgContext.fill(CGRect(x: margin, y: currentY, width: 3, height: boxH))
+            drawStr(program.taskDescription, attrs: bodyAttrs, x: margin + 16, y: currentY + 12, w: contentW - 28)
+            currentY += boxH + 28
+
+            // ── High-Level Steps ──
+            if !program.highLevelSteps.isEmpty {
+                drawSectionLabel("HIGH-LEVEL STEPS", color: teal)
+                for (i, step) in program.highLevelSteps.enumerated() {
+                    let rowH = max(strHeight(step, attrs: bodyAttrs, width: contentW - 48) + 20, 38)
+                    checkBreak(rowH + 4)
+                    ctx.cgContext.setFillColor((i % 2 == 0 ? rowAlt : UIColor.white).cgColor)
+                    ctx.cgContext.fill(CGRect(x: margin, y: currentY, width: contentW, height: rowH))
+                    // Number circle
+                    let circleRect = CGRect(x: margin + 8, y: currentY + (rowH - 20) / 2, width: 20, height: 20)
+                    ctx.cgContext.setFillColor(teal.cgColor)
+                    ctx.cgContext.fillEllipse(in: circleRect)
+                    let nStr = NSAttributedString(string: "\(i + 1)", attributes: [
+                        .font: UIFont.systemFont(ofSize: 10, weight: .bold), .foregroundColor: UIColor.white
+                    ])
+                    let nSz = nStr.size()
+                    nStr.draw(at: CGPoint(x: circleRect.midX - nSz.width / 2, y: circleRect.midY - nSz.height / 2))
+                    drawStr(step, attrs: bodyAttrs, x: margin + 38, y: currentY + 10, w: contentW - 48)
+                    currentY += rowH + 3
+                }
+                currentY += 20
+            }
+
+            // ── Detailed Steps ──
+            if !program.lowLevelSteps.isEmpty {
+                drawSectionLabel("DETAILED STEPS", color: blue)
+                for (i, step) in program.lowLevelSteps.enumerated() {
+                    let rowH = max(strHeight(step, attrs: bodyAttrs, width: contentW - 36) + 16, 32)
+                    checkBreak(rowH + 4)
+                    ctx.cgContext.setFillColor((i % 2 == 0 ? rowAlt : UIColor.white).cgColor)
+                    ctx.cgContext.fill(CGRect(x: margin, y: currentY, width: contentW, height: rowH))
+                    NSAttributedString(string: "✓", attributes: [
+                        .font: UIFont.systemFont(ofSize: 12, weight: .semibold), .foregroundColor: blue
+                    ]).draw(at: CGPoint(x: margin + 10, y: currentY + (rowH - 14) / 2))
+                    drawStr(step, attrs: bodyAttrs, x: margin + 28, y: currentY + 8, w: contentW - 38)
+                    currentY += rowH + 3
+                }
+                currentY += 20
+            }
+
+            // ── Observations ──
+            if !program.observations.isEmpty {
+                drawSectionLabel("OBSERVATIONS & NOTES", color: orange)
+                for observation in program.observations {
+                    let rowH = max(strHeight(observation, attrs: bodyAttrs, width: contentW - 32) + 16, 32)
+                    checkBreak(rowH + 4)
+                    NSAttributedString(string: "›", attributes: [
+                        .font: UIFont.systemFont(ofSize: 16, weight: .medium), .foregroundColor: orange
+                    ]).draw(at: CGPoint(x: margin + 6, y: currentY + (rowH - 18) / 2))
+                    drawStr(observation, attrs: bodyAttrs, x: margin + 22, y: currentY + 8, w: contentW - 32)
+                    currentY += rowH + 6
+                }
             }
         }
-        
-        if !program.lowLevelSteps.isEmpty {
-            document += """
-            
-            ───────────────────────────────────────────────────────────────
-            DETAILED STEPS
-            ───────────────────────────────────────────────────────────────
-            
-            """
-            for (index, step) in program.lowLevelSteps.enumerated() {
-                document += "   \(index + 1). \(step)\n"
-            }
-        }
-        
-        if !program.observations.isEmpty {
-            document += """
-            
-            ───────────────────────────────────────────────────────────────
-            OBSERVATIONS & NOTES
-            ───────────────────────────────────────────────────────────────
-            
-            """
-            for observation in program.observations {
-                document += "• \(observation)\n"
-            }
-        }
-        
-        document += """
-        
-        ═══════════════════════════════════════════════════════════════
-                              END OF DOCUMENT
-        ═══════════════════════════════════════════════════════════════
-        
-        Generated by Employ210 - Empowering Employment Success
-        """
-        
-        return document
     }
 }
 
