@@ -430,3 +430,7 @@ struct AddTrainerSheet: View {
             .environmentObject(AuthenticationManager())
     }
 }
+
+#Preview("Add Trainer Sheet") {
+    AddTrainerSheet { _, _ in }
+}

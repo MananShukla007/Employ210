@@ -95,3 +95,7 @@ struct SplashView: View {
     RootCoordinator()
         .environmentObject(AuthenticationManager())
 }
+
+#Preview("Loading Splash") {
+    SplashView()
+}

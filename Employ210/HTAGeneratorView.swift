@@ -3,7 +3,7 @@
 //  Employ210
 //
 //  HTA Generator – Two-Phase Session-Based API with Modern Dark UI
-//  Includes Edit & Save to AWS S3 functionality
+//  Includes Edit & Save to AWS S3 functionality 
 //
 
 import SwiftUI
@@ -1794,4 +1794,17 @@ struct HTALoadingOverlay: View {
         HTAGeneratorView()
             .environmentObject(AuthenticationManager())
     }
+}
+
+#Preview("HTA Editor") {
+    HTAEditorView(
+        htaResult: HTAResult(
+            duration_sec: 12.5,
+            high_level_steps: ["Gather materials", "Prepare workspace", "Complete task", "Clean up"],
+            low_level_steps: ["Get scissors from drawer", "Lay materials on table"],
+            observations: ["Check safety precautions first"]
+        ),
+        taskDescription: "Making a sandwich",
+        onSave: { _ in }
+    )
 }

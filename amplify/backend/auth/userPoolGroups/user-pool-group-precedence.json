@@ -1,0 +1,18 @@
+[
+  {
+    "groupName": "admin",
+    "precedence": 1
+  },
+  {
+    "groupName": "trainer",
+    "precedence": 2
+  },
+  {
+    "groupName": "member",
+    "precedence": 3
+  },
+  {
+    "groupName": "employ210userpool",
+    "precedence": 4
+  }
+]

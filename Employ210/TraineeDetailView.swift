@@ -2193,3 +2193,69 @@ class RecordingDelegate: NSObject, AVCaptureFileOutputRecordingDelegate {
         .environmentObject(AuthenticationManager())
     }
 }
+
+#Preview("Program Detail") {
+    ProgramDetailSheet(
+        program: SavedHTAProgram(
+            id: "prog-1",
+            traineeId: "trainee-1",
+            taskDescription: "Make a cup of tea",
+            highLevelSteps: ["Boil water", "Add tea bag", "Pour water", "Wait", "Remove bag"],
+            lowLevelSteps: ["Fill kettle with water", "Place kettle on base", "Press the on button"],
+            observations: ["Trainee may need help with kettle"],
+            durationSec: 12.5,
+            createdAt: Date(),
+            s3Key: nil
+        )
+    )
+}
+
+#Preview("Task Evaluation") {
+    TaskEvaluationView(
+        program: SavedHTAProgram(
+            id: "prog-1",
+            traineeId: "trainee-1",
+            taskDescription: "Make a cup of tea",
+            highLevelSteps: ["Boil water", "Add tea bag", "Pour water", "Wait", "Remove bag"],
+            lowLevelSteps: ["Fill kettle with water", "Place kettle on base"],
+            observations: [],
+            durationSec: nil,
+            createdAt: Date(),
+            s3Key: nil
+        )
+    )
+}
+
+#Preview("Session Detail") {
+    SessionDetailSheet(
+        evaluation: EvaluationResult(
+            programId: "prog-1",
+            taskDescription: "Make a cup of tea",
+            evaluatedAt: Date(),
+            elapsedTimeSeconds: 185,
+            passCount: 3,
+            needsPromptingCount: 1,
+            notCompletedCount: 1,
+            pendingCount: 0,
+            stepResults: ["high_0": 1, "high_1": 2, "high_2": 1, "high_3": 3, "high_4": 1]
+        ),
+        program: SavedHTAProgram(
+            id: "prog-1",
+            traineeId: "trainee-1",
+            taskDescription: "Make a cup of tea",
+            highLevelSteps: ["Boil water", "Add tea bag", "Pour water", "Wait", "Remove bag"],
+            lowLevelSteps: [],
+            observations: [],
+            durationSec: nil,
+            createdAt: Date(),
+            s3Key: nil
+        )
+    )
+}
+
+#Preview("Record & Analyze") {
+    RecordAndAnalyzeView(
+        trainee: Trainee(id: "1", firstName: "John", lastName: "Doe", createdAt: Date()),
+        trainerId: "trainer-1"
+    )
+}

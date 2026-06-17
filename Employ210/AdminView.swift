@@ -194,3 +194,15 @@ struct AddUserView: View {
 #Preview {
     AdminView()
 }
+
+#Preview("Search User") {
+    NavigationStack {
+        SearchUserView()
+    }
+}
+
+#Preview("Add User") {
+    NavigationStack {
+        AddUserView()
+    }
+}

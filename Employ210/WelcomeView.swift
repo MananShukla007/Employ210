@@ -949,3 +949,24 @@ struct ForgotPasswordView: View {
     }
     .environmentObject(AuthenticationManager())
 }
+
+#Preview("Login") {
+    NavigationStack {
+        LoginView()
+    }
+    .environmentObject(AuthenticationManager())
+}
+
+#Preview("Sign Up") {
+    NavigationStack {
+        SignUpView()
+    }
+    .environmentObject(AuthenticationManager())
+}
+
+#Preview("Forgot Password") {
+    NavigationStack {
+        ForgotPasswordView()
+    }
+    .environmentObject(AuthenticationManager())
+}

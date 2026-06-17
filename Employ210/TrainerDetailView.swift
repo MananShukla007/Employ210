@@ -480,6 +480,10 @@ struct AddTraineeToTrainerSheet: View {
     }
 }
 
+#Preview("Add Trainee Sheet") {
+    AddTraineeToTrainerSheet(trainerId: "trainer-1", store: TraineeStore())
+}
+
 // MARK: - Trainee Navigation Row (Helper to simplify compiler)
 
 struct TraineeNavigationRow: View {
