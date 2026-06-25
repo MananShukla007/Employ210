@@ -19,3 +19,16 @@ amplifytools.xcconfig
 .secret-*
 **.sample
 #amplify-do-not-edit-end
+
+# Sensitive Amplify backend info (contains AWS account IDs and ARNs)
+amplify/team-provider-info.json
+
+# Xcode user data and DS_Store
+.DS_Store
+Employ210/.DS_Store
+Employ210.xcodeproj/xcuserdata/
+Employ210.xcodeproj/project.xcworkspace/xcuserdata/
+Employ210.xcodeproj/project.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+
+# Claude Code internal files
+.claude/
