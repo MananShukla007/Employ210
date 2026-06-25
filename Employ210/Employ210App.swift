@@ -14,6 +14,8 @@ import AWSS3StoragePlugin
 struct Employ210App: App {
 
     @StateObject private var authManager = AuthenticationManager()
+    @StateObject private var appStatus = AppStatusService()
+    @Environment(\.scenePhase) private var scenePhase
 
     private static var amplifyConfigured = false
 
@@ -46,6 +48,13 @@ struct Employ210App: App {
         WindowGroup {
             SplashScreenView()
                 .environmentObject(authManager)
+                .environmentObject(appStatus)
+        }
+        .onChange(of: scenePhase) { newPhase in
+            // Re-check maintenance flag every time the app comes to foreground
+            if newPhase == .active {
+                appStatus.check()
+            }
         }
     }
 }

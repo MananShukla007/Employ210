@@ -28,7 +28,8 @@ enum HTALog {
 struct AWSConfig {
     static let lambdaURL = "https://5ppdt2w3u74jpvv3v4mlcjanom0lwfxn.lambda-url.us-east-2.on.aws/"
     static let requestTimeout: TimeInterval = 300  // 5 minutes for complex HTA generation
-    
+    static let statusURL = ""  // TODO: set to your maintenance-status endpoint URL
+
     // S3 Configuration
     static let s3BucketName = "employ210-hta-storage5ca8e-dev"  // Your S3 bucket name
     static let s3Region = "us-east-1"                           // Your S3 region
@@ -45,14 +46,16 @@ struct ClarifyRequest: Codable {
     let materials: [String]?
     let transcript: String?
     let sop_text: String?
-    
-    init(query: String, description: String? = nil, materials: [String]? = nil, transcript: String? = nil, sop_text: String? = nil) {
+    let custom_instructions: String?
+
+    init(query: String, description: String? = nil, materials: [String]? = nil, transcript: String? = nil, sop_text: String? = nil, custom_instructions: String? = nil) {
         self.phase = "clarify"
         self.query = query
         self.description = description
         self.materials = materials
         self.transcript = transcript
         self.sop_text = sop_text
+        self.custom_instructions = custom_instructions
     }
 }
 
@@ -105,6 +108,14 @@ struct HTAResult: Codable {
     var high_level_steps: [String]?
     var low_level_steps: [String]?
     var observations: [String]?
+    var compliance_checklist: [ComplianceCheckItem]?
+}
+
+struct ComplianceCheckItem: Codable, Identifiable {
+    var id: String { rule }
+    let rule: String
+    let satisfied: Bool
+    let note: String?
 }
 
 // Editable version for the editor
@@ -199,6 +210,7 @@ struct HTAGeneratorView: View {
     
     @State private var showShareSheet = false
     @State private var showExportSuccess = false
+    @State private var showInstructionsSheet = false
     @State private var showSignOutConfirm = false
     @State private var showEditView = false
     @State private var showSaveSuccess = false
@@ -372,7 +384,46 @@ struct HTAGeneratorView: View {
                         )
                     }
                     .padding(.horizontal, 24)
-                    
+
+                    // Instructions Button
+                    Button {
+                        showInstructionsSheet = true
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: vm.customInstructions.isEmpty ? "doc.text.badge.plus" : "doc.text.fill")
+                                .font(.system(size: 15))
+                                .foregroundStyle(vm.customInstructions.isEmpty ? .white.opacity(0.5) : .teal)
+                            Text(vm.customInstructions.isEmpty ? "Add Instructions / SOP (Optional)" : "Instructions Added")
+                                .font(.subheadline)
+                                .foregroundColor(vm.customInstructions.isEmpty ? .white.opacity(0.6) : .teal)
+                            Spacer()
+                            if !vm.customInstructions.isEmpty {
+                                Text("\(vm.customInstructions.count) chars")
+                                    .font(.caption)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 3)
+                                    .background(Color.teal.opacity(0.15))
+                                    .clipShape(Capsule())
+                                    .foregroundStyle(.teal)
+                            }
+                            Image(systemName: "chevron.right")
+                                .font(.caption2)
+                                .foregroundStyle(.white.opacity(0.3))
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 13)
+                        .background(Color.white.opacity(0.06))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(
+                                    vm.customInstructions.isEmpty ? Color.white.opacity(0.1) : Color.teal.opacity(0.35),
+                                    lineWidth: 1
+                                )
+                        )
+                    }
+                    .padding(.horizontal, 24)
+
                     // Generate Button
                     Button {
                         focused = false
@@ -488,6 +539,9 @@ struct HTAGeneratorView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .onTapGesture { focused = false }
+        .sheet(isPresented: $showInstructionsSheet) {
+            InstructionsInputView(customInstructions: $vm.customInstructions)
+        }
         .sheet(isPresented: $showShareSheet) {
             if let url = exportedFileURL {
                 ShareSheet(activityItems: [url])
@@ -1392,6 +1446,10 @@ struct HTAResultCard: View {
                     }
                 }
             }
+
+            if let checklist = result.compliance_checklist, !checklist.isEmpty {
+                ComplianceChecklistView(items: checklist)
+            }
         }
         .padding(20)
         .background(Color.white.opacity(0.05))
@@ -1427,6 +1485,64 @@ struct HTAStepSection<Content: View>: View {
         .padding()
         .background(color.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+// =====================================================================
+// MARK: - Compliance Checklist
+// =====================================================================
+
+struct ComplianceChecklistView: View {
+    let items: [ComplianceCheckItem]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "checklist")
+                    .foregroundStyle(.purple)
+                Text("Compliance Checklist")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(.purple)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(items) { item in
+                    ComplianceCheckRow(item: item)
+                }
+            }
+        }
+        .padding()
+        .background(Color.purple.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+struct ComplianceCheckRow: View {
+    let item: ComplianceCheckItem
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: item.satisfied ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                .foregroundStyle(item.satisfied ? .green : .orange)
+                .font(.system(size: 16))
+                .padding(.top, 1)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(item.rule)
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.9))
+
+                if let note = item.note, !note.isEmpty {
+                    Text(note)
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.55))
+                }
+            }
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(item.satisfied ? Color.green.opacity(0.06) : Color.orange.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }
 
@@ -1520,6 +1636,7 @@ struct HTALogCard: View {
 final class HTAViewModel: ObservableObject {
     
     @Published var descriptionText = ""
+    @Published var customInstructions = ""
     @Published var isRunning = false
     @Published var htaResult: HTAResult?
     @Published var errorMessage: String?
@@ -1561,7 +1678,11 @@ final class HTAViewModel: ObservableObject {
         }
         
         do {
-            let request = ClarifyRequest(query: query)
+            let trimmedInstructions = customInstructions.trimmingCharacters(in: .whitespacesAndNewlines)
+            let request = ClarifyRequest(
+                query: query,
+                custom_instructions: trimmedInstructions.isEmpty ? nil : trimmedInstructions
+            )
             let response = try await callClarifyAPI(request: request)
             
             if let err = response.error {

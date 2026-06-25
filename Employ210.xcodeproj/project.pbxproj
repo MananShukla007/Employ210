@@ -9,6 +9,10 @@
 /* Begin PBXBuildFile section */
 		1CA7B277BEB2E1CBEFCEFF72 /* awsconfiguration.json in Resources */ = {isa = PBXBuildFile; fileRef = 70EA6B2A225EC4D154BC6E9A /* awsconfiguration.json */; };
 		B7A58A45E0A8DFE85FDD9AEE /* amplifyconfiguration.json in Resources */ = {isa = PBXBuildFile; fileRef = FACD92EDAF6556DAB97989E1 /* amplifyconfiguration.json */; };
+		E80374402FE03964004074B3 /* Amplify in Frameworks */ = {isa = PBXBuildFile; productRef = E86BDF702FBB4E5400E3009C /* Amplify */; };
+		E80374412FE03964004074B3 /* AWSCognitoAuthPlugin in Frameworks */ = {isa = PBXBuildFile; productRef = E86BDF712FBB4E5400E3009C /* AWSCognitoAuthPlugin */; };
+		E80374422FE03964004074B3 /* AWSS3StoragePlugin in Frameworks */ = {isa = PBXBuildFile; productRef = E86BDF722FBB4E5400E3009C /* AWSS3StoragePlugin */; };
+		E80374432FE03964004074B3 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = E86BDF732FBB4E5400E3009C /* Lottie */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -85,6 +89,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E80374432FE03964004074B3 /* Lottie in Frameworks */,
+				E80374422FE03964004074B3 /* AWSS3StoragePlugin in Frameworks */,
+				E80374412FE03964004074B3 /* AWSCognitoAuthPlugin in Frameworks */,
+				E80374402FE03964004074B3 /* Amplify in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -263,7 +271,7 @@
 				7EF971522E81EDCC0061B747 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				E87FBD292F4E2772003C5374 /* XCRemoteSwiftPackageReference "swift-algorithms" */,
 				E823B42E2F607B4A00AC6E5C /* XCRemoteSwiftPackageReference "swift-argument-parser" */,
-					E86BDF282FBB4E0200E3009C /* XCRemoteSwiftPackageReference "lottie-ios" */,
+				E86BDF282FBB4E0200E3009C /* XCRemoteSwiftPackageReference "lottie-ios" */,
 				E86BDF292FBB4E5400E3009C /* XCRemoteSwiftPackageReference "amplify-swift" */,
 				E86BDF2A2FBB4F1E00E3009C /* XCRemoteSwiftPackageReference "aws-sdk-swift" */,
 			);
@@ -711,22 +719,22 @@
 /* Begin XCSwiftPackageProductDependency section */
 		E86BDF702FBB4E5400E3009C /* Amplify */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = E86BDF292FBB4E5400E3009C /* amplify-swift */;
+			package = E86BDF292FBB4E5400E3009C /* XCRemoteSwiftPackageReference "amplify-swift" */;
 			productName = Amplify;
 		};
 		E86BDF712FBB4E5400E3009C /* AWSCognitoAuthPlugin */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = E86BDF292FBB4E5400E3009C /* amplify-swift */;
+			package = E86BDF292FBB4E5400E3009C /* XCRemoteSwiftPackageReference "amplify-swift" */;
 			productName = AWSCognitoAuthPlugin;
 		};
 		E86BDF722FBB4E5400E3009C /* AWSS3StoragePlugin */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = E86BDF292FBB4E5400E3009C /* amplify-swift */;
+			package = E86BDF292FBB4E5400E3009C /* XCRemoteSwiftPackageReference "amplify-swift" */;
 			productName = AWSS3StoragePlugin;
 		};
 		E86BDF732FBB4E5400E3009C /* Lottie */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = E86BDF282FBB4E0200E3009C /* lottie-ios */;
+			package = E86BDF282FBB4E0200E3009C /* XCRemoteSwiftPackageReference "lottie-ios" */;
 			productName = Lottie;
 		};
 /* End XCSwiftPackageProductDependency section */

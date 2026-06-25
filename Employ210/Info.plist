@@ -15,7 +15,7 @@
 			</array>
 		</dict>
 	</array>
-	<key>camera1</key>
-	<string>NSCameraUsageDescription</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Employ210 uses the camera to scan documents and capture training materials.</string>
 </dict>
 </plist>

@@ -2,15 +2,7 @@
 //  RootCoordinator.swift
 //  Employ210
 //
-//  Created by Manan Shukla on 3/10/26.
-//
-
-
-//
-//  RootCoordinator.swift
-//  Employ210
-//
-//  Coordinates navigation based on authentication state
+//  Coordinates navigation based on authentication state and maintenance mode.
 //
 
 import SwiftUI
@@ -18,10 +10,13 @@ import SwiftUI
 struct RootCoordinator: View {
 
     @EnvironmentObject var authManager: AuthenticationManager
+    @EnvironmentObject var appStatus: AppStatusService
 
     var body: some View {
         Group {
-            if authManager.isLoading {
+            if appStatus.isInMaintenance {
+                MaintenanceView(message: appStatus.maintenanceMessage)
+            } else if authManager.isLoading {
                 // Show splash while checking session
                 SplashView()
             } else if authManager.isAuthenticated {
@@ -39,6 +34,11 @@ struct RootCoordinator: View {
         }
         .animation(.easeInOut(duration: 0.3), value: authManager.isAuthenticated)
         .animation(.easeInOut(duration: 0.2), value: authManager.isLoading)
+        .animation(.easeInOut(duration: 0.3), value: appStatus.isInMaintenance)
+        .onAppear {
+            // Initial status check after splash animation completes
+            appStatus.check()
+        }
     }
 }
 
@@ -94,6 +94,18 @@ struct SplashView: View {
 #Preview {
     RootCoordinator()
         .environmentObject(AuthenticationManager())
+        .environmentObject(AppStatusService())
+}
+
+#Preview("Maintenance") {
+    RootCoordinator()
+        .environmentObject(AuthenticationManager())
+        .environmentObject({
+            let s = AppStatusService()
+            // To preview maintenance: set AWSConfig.statusURL to return maintenanceMode=true,
+            // or temporarily hard-code by calling check() against a mock.
+            return s
+        }())
 }
 
 #Preview("Loading Splash") {
