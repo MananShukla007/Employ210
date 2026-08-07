@@ -47,8 +47,9 @@ struct ClarifyRequest: Codable {
     let transcript: String?
     let sop_text: String?
     let custom_instructions: String?
+    let folder: String?
 
-    init(query: String, description: String? = nil, materials: [String]? = nil, transcript: String? = nil, sop_text: String? = nil, custom_instructions: String? = nil) {
+    init(query: String, description: String? = nil, materials: [String]? = nil, transcript: String? = nil, sop_text: String? = nil, custom_instructions: String? = nil, folder: String? = nil) {
         self.phase = "clarify"
         self.query = query
         self.description = description
@@ -56,6 +57,19 @@ struct ClarifyRequest: Codable {
         self.transcript = transcript
         self.sop_text = sop_text
         self.custom_instructions = custom_instructions
+        self.folder = folder
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(phase, forKey: .phase)
+        try c.encode(query, forKey: .query)
+        try c.encodeIfPresent(description, forKey: .description)
+        try c.encodeIfPresent(materials, forKey: .materials)
+        try c.encodeIfPresent(transcript, forKey: .transcript)
+        try c.encodeIfPresent(sop_text, forKey: .sop_text)
+        try c.encodeIfPresent(custom_instructions, forKey: .custom_instructions)
+        try c.encodeIfPresent(folder, forKey: .folder)
     }
 }
 
@@ -1679,9 +1693,11 @@ final class HTAViewModel: ObservableObject {
         
         do {
             let trimmedInstructions = customInstructions.trimmingCharacters(in: .whitespacesAndNewlines)
+            let savedFolder = UserDefaults.standard.string(forKey: "selectedFolder")
             let request = ClarifyRequest(
                 query: query,
-                custom_instructions: trimmedInstructions.isEmpty ? nil : trimmedInstructions
+                custom_instructions: trimmedInstructions.isEmpty ? nil : trimmedInstructions,
+                folder: savedFolder?.isEmpty == false ? savedFolder : nil
             )
             let response = try await callClarifyAPI(request: request)
             

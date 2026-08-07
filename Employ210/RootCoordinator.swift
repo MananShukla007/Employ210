@@ -20,10 +20,15 @@ struct RootCoordinator: View {
                 // Show splash while checking session
                 SplashView()
             } else if authManager.isAuthenticated {
-                // User is signed in - show role selection
-                RoleSelectionView()
-                    .environmentObject(authManager)
-                    .transition(.opacity)
+                if authManager.userEmail == "employ210@gmail.com" {
+                    FolderPickerView()
+                        .environmentObject(authManager)
+                        .transition(.opacity)
+                } else {
+                    RoleSelectionView()
+                        .environmentObject(authManager)
+                        .transition(.opacity)
+                }
             } else {
                 // Not signed in - show welcome/auth flow
                 NavigationStack {

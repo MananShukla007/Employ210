@@ -48,7 +48,6 @@ struct Trainer: Identifiable, Codable, Equatable {
     }
 }
 
-// MARK: - STORE WITH PERSISTENCE
 
 @MainActor
 final class TraineeStore: ObservableObject {
