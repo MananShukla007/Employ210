@@ -28,7 +28,7 @@ enum HTALog {
 struct AWSConfig {
     static let lambdaURL = "https://5ppdt2w3u74jpvv3v4mlcjanom0lwfxn.lambda-url.us-east-2.on.aws/"
     static let requestTimeout: TimeInterval = 300  // 5 minutes for complex HTA generation
-    static let statusURL = ""  // TODO: set to your maintenance-status endpoint URL
+    static let statusURL = "https://raw.githubusercontent.com/MananShukla007/Employ210/main/status.json"
 
     // S3 Configuration
     static let s3BucketName = "employ210-hta-storage5ca8e-dev"  // Your S3 bucket name
